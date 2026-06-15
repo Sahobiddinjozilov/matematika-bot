@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+
 import telebot
 from datetime import datetime, time
 
-TOKEN = "8890779534:AAEe4i6q72RYGcWL14JvqcymPI_YcQJ90us"
-bot = telebot.TeleBot(TOKEN)
+bot = telebot.TeleBot("8890779534:AAEe4i6q72RYGcWL14JvqcymPI_YcQJ90us")
 
 users = {}
 tests = {}
@@ -11,31 +11,56 @@ answers = {}
 results = []
 question_wrong = []
 
-# -------- START (ism olish) --------
+
+# -------- START --------
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, "Ism-familiyangizni kiriting:")
+    users[message.chat.id] = message.text
+
+    bot.send_message(
+        message.chat.id,
+        "👋 Ism-familiyangizni kiriting:"
+    )
+
     bot.register_next_step_handler(message, save_name)
 
+
 def save_name(message):
-    users[message.chat.id] = message.text
-    bot.send_message(message.chat.id, f"Salom {message.text}! Testni kuting.")
+    try:
+        users[message.chat.id] = message.text
+
+        bot.send_message(
+            message.chat.id,
+            f"Salom {message.text}! 📌 Testni kuting."
+        )
+    except:
+        bot.send_message(message.chat.id, "Xatolik. Qayta /start bosing.")
+
 
 # -------- TEST YARATISH --------
 @bot.message_handler(commands=['yangi_test'])
 def yangi_test(message):
-    bot.send_message(message.chat.id, "Test nomini kiriting:")
+    bot.send_message(message.chat.id, "📌 Test nomini kiriting:")
     bot.register_next_step_handler(message, test_name)
+
 
 def test_name(message):
     tests["nom"] = message.text
-    bot.send_message(message.chat.id, "Javob kalitini kiriting:")
+
+    bot.send_message(message.chat.id, "🔑 Javob kalitini kiriting:")
     bot.register_next_step_handler(message, test_key)
+
 
 def test_key(message):
     tests["kalit"] = message.text.strip().upper()
-    bot.send_message(message.chat.id, "Tugash vaqtini kiriting (masalan 20:30):")
+
+    bot.send_message(
+        message.chat.id,
+        "⏰ Tugash vaqtini kiriting (masalan 20:30):"
+    )
+
     bot.register_next_step_handler(message, test_time)
+
 
 def test_time(message):
     try:
@@ -48,41 +73,36 @@ def test_time(message):
 
         bot.send_message(
             message.chat.id,
-            f"Test saqlandi\n"
-            f"Nom: {tests['nom']}\n"
-            f"Tugash vaqti: {message.text}"
+            f"✅ Test saqlandi\n"
+            f"📌 Nom: {tests['nom']}\n"
+            f"⏰ Tugash vaqti: {message.text}"
         )
 
     except:
-        bot.send_message(message.chat.id, "Vaqtni to‘g‘ri kiriting: 20:30")
+        bot.send_message(message.chat.id, "❌ Vaqtni to‘g‘ri kiriting: 20:30")
 
-    answers.clear()
-    results.clear()
-    question_wrong.clear()
-
-    bot.send_message(message.chat.id,
-        f"Test saqlandi ?\n"
-        f"Nom: {tests['nom']}\n"
-        f"Tugash vaqti: {message.text}")
 
 # -------- TEST YOPILGANMI --------
 def is_closed():
+    if "deadline" not in tests:
+        return True
     return datetime.now().time() >= tests["deadline"]
 
+
 # -------- JAVOB TEKSHIRISH --------
-@bot.message_handler(func=lambda m: True)
+@bot.message_handler(func=lambda m: m.text and not m.text.startswith('/'))
 def check(message):
 
     if "kalit" not in tests:
-        bot.send_message(message.chat.id, "Hozircha test yo‘q ?")
+        bot.send_message(message.chat.id, "⏳ Hozircha test yo‘q.")
         return
 
     if is_closed():
-        bot.send_message(message.chat.id, "Test yopilgan ??")
+        bot.send_message(message.chat.id, "⛔️ Test yopilgan.")
         return
 
     if message.chat.id in answers:
-        bot.send_message(message.chat.id, "Siz allaqachon javob yuborgansiz ?")
+        bot.send_message(message.chat.id, "⚠️ Siz allaqachon javob yuborgansiz.")
         return
 
     user_ans = message.text.strip().upper()
@@ -106,12 +126,18 @@ def check(message):
         "time": datetime.now()
     })
 
-    bot.send_message(message.chat.id,
-        f"?? {tests['nom']}\n"
-        f"? Natija: {score}/{len(key)}\n"
-        f"?? Foiz: {score/len(key)*100:.0f}%")
+    try:
+        bot.send_message(
+            message.chat.id,
+            f"📊 {tests['nom']}\n"
+            f"🎯 Natija: {score}/{len(key)}\n"
+            f"📈 Foiz: {score/len(key)*100:.0f}%"
+        )
+    except:
+        pass
 
-# -------- YAKUNLASH + REYTING --------
+
+# -------- YAKUNLASH --------
 @bot.message_handler(commands=['yakunla'])
 def yakunla(message):
 
@@ -124,18 +150,16 @@ def yakunla(message):
         key=lambda x: (-x["score"], x["time"])
     )
 
-    text = "?? NATIJALAR:\n\n"
-
-    medals = ["??", "??", "??"]
+    text = "🏆 NATIJALAR:\n\n"
+    medals = ["🥇", "🥈", "🥉"]
 
     for i, r in enumerate(sorted_results):
         if i < 3:
             text += f"{medals[i]} {r['name']} - {r['score']}\n"
         else:
-            text += f"?? {r['name']} - {r['score']}\n"
+            text += f"⭐️ {r['name']} - {r['score']}\n"
 
-    # -------- 50%+ xato savollar --------
-    text += "\n?? 50%+ xato savollar:\n"
+    text += "\n📌 50%+ xato savollar:\n"
 
     wrong_count = {}
     total = len(results)
@@ -144,16 +168,16 @@ def yakunla(message):
         wrong_count[q] = wrong_count.get(q, 0) + 1
 
     found = False
-
     for q, c in wrong_count.items():
-        if c / total >= 0.5:
-            text += f"? Savol {q}\n"
+        if total > 0 and c / total >= 0.5:
+            text += f"❌ Savol {q}\n"
             found = True
 
     if not found:
-        text += "Yuqori xatolik yoq ??"
+        text += "✔️ Yuqori xatolik yo‘q"
 
     bot.send_message(message.chat.id, text)
+
 
 # -------- BOT ISHLASH --------
 bot.polling()
