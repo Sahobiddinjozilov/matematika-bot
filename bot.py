@@ -59,7 +59,7 @@ def is_closed():
 def check(message):
 
     if "kalit" not in tests:
-        bot.send_message(message.chat.id, "Hozircha test yo‘q ?")
+        bot.send_message(message.chat.id, "Hozircha test yoq ?")
         return
 
     if is_closed():
@@ -86,7 +86,7 @@ def check(message):
 
     results.append({
         "id": message.chat.id,
-        "name": users.get(message.chat.id, "O‘quvchi"),
+        "name": users.get(message.chat.id, "Oquvchi"),
         "score": score,
         "time": datetime.now()
     })
@@ -136,7 +136,7 @@ def yakunla(message):
             found = True
 
     if not found:
-        text += "Yuqori xatolik yo‘q ??"
+        text += "Yuqori xatolik yoq ??"
 
     bot.send_message(message.chat.id, text)
 
