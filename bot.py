@@ -38,8 +38,23 @@ def test_key(message):
     bot.register_next_step_handler(message, test_time)
 
 def test_time(message):
-    h, m = map(int, message.text.strip().split(":"))
-    tests["deadline"] = time(h, m)
+    try:
+        h, m = map(int, message.text.strip().split(":"))
+        tests["deadline"] = time(h, m)
+
+        answers.clear()
+        results.clear()
+        question_wrong.clear()
+
+        bot.send_message(
+            message.chat.id,
+            f"Test saqlandi\n"
+            f"Nom: {tests['nom']}\n"
+            f"Tugash vaqti: {message.text}"
+        )
+
+    except:
+        bot.send_message(message.chat.id, "Vaqtni to‘g‘ri kiriting: 20:30")
 
     answers.clear()
     results.clear()
@@ -59,7 +74,7 @@ def is_closed():
 def check(message):
 
     if "kalit" not in tests:
-        bot.send_message(message.chat.id, "Hozircha test yoq ?")
+        bot.send_message(message.chat.id, "Hozircha test yo‘q ?")
         return
 
     if is_closed():
@@ -86,7 +101,7 @@ def check(message):
 
     results.append({
         "id": message.chat.id,
-        "name": users.get(message.chat.id, "Oquvchi"),
+        "name": users.get(message.chat.id, "O‘quvchi"),
         "score": score,
         "time": datetime.now()
     })
